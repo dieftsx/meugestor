@@ -284,7 +284,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
               <BarChart3 className="h-6 w-6" />
-              <span className="text-xl font-bold">GestãoRO</span>
+              <span className="text-xl font-bold">Meu Gestor</span>
             </div>
             <div className="text-sm text-gray-400">
               <p>Suporte: (69) 9999-9999 • contato@gestaoro.com.br</p>

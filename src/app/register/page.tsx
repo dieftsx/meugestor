@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase"
+import { createSupabaseClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,7 +30,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = createSupabaseClient()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()

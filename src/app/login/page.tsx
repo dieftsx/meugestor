@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase"
+import { createSupabaseClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = createSupabaseClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

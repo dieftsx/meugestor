@@ -1,23 +1,26 @@
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+// Corrigido: importação e verificação das variáveis de ambiente do Supabase
 
-// Cliente para componentes do lado do cliente
-export const createClient = () => createClientComponentClient()
+import { createClient } from "@supabase/supabase-js"
 
-// Cliente para componentes do servidor
-export const createServerClient = () => {
-  const cookieStore = cookies()
-  return createServerComponentClient({ cookies: () => cookieStore })
+// Verificação das variáveis de ambiente do Supabase
+const supabaseUrl: string | undefined = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey: string | undefined = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Missing Supabase environment variables")
 }
 
+// Cliente para componentes do lado do cliente
+export const createSupabaseClient = () =>
+  createClient(supabaseUrl, supabaseAnonKey)
+
 // Cliente singleton para uso geral no cliente
-let supabaseClient: ReturnType<typeof createClientComponentClient> | null = null
+let supabaseClient: ReturnType<typeof createClient> | null = null
 
 export const getSupabaseClient = () => {
   if (!supabaseClient) {
-    supabaseClient = createClientComponentClient()
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
   }
   return supabaseClient
 }

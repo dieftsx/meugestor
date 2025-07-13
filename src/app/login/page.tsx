@@ -52,7 +52,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <BarChart3 className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">GestãoRO</span>
+            <span className="text-2xl font-bold text-gray-900">Meu Gestor</span>
           </div>
           <CardTitle>Entrar na sua conta</CardTitle>
           <CardDescription>Acesse seu painel de controle e gerencie seu negócio</CardDescription>
@@ -120,7 +120,7 @@ export default function LoginPage() {
           {/* Demo Login */}
           <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
             <p className="text-sm text-green-800 font-medium mb-2">🎯 Conta Demo:</p>
-            <p className="text-xs text-green-700">Email: demo@gestaoro.com.br</p>
+            <p className="text-xs text-green-700">Email: demo@meugestor.com.br</p>
             <p className="text-xs text-green-700">Senha: demo123</p>
             <Button
               type="button"

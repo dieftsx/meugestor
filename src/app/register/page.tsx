@@ -100,7 +100,7 @@ export default function RegisterPage() {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <BarChart3 className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">GestãoRO</span>
+            <span className="text-2xl font-bold text-gray-900">Meu Gestor</span>
           </div>
           <CardTitle>Criar sua conta</CardTitle>
           <CardDescription>Comece seu teste grátis de 15 dias agora mesmo</CardDescription>

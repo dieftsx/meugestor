@@ -18,7 +18,9 @@ export default function LandingPage() {
             <Link href="/demo">
               <Button variant="ghost">Ver Demo</Button>
             </Link>
-            <Button>Começar Agora</Button>
+            <Link href="/login">
+              <Button>Começar Agora</Button>
+            </Link>
           </div>
         </nav>
       </header>
@@ -37,10 +39,12 @@ export default function LandingPage() {
           <strong>Aumente seus lucros em 30 dias ou seu dinheiro de volta!</strong>
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Button size="lg" className="text-lg px-8 py-4">
-            Começar Teste Grátis de 15 Dias
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <Link href="/login">
+            <Button size="lg" className="text-lg px-8 py-4">
+              Começar Teste Grátis de 15 Dias
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
           <Link href="/demo">
             <Button size="lg" variant="outline" className="text-lg px-8 py-4 bg-transparent">
               Ver Demonstração

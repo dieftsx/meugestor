@@ -69,8 +69,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <div className="flex items-center gap-2 px-4 py-2">
           <BarChart3 className="h-6 w-6 text-blue-600" />
           <div>
-            <p className="text-lg font-semibold">GestãoRO</p>
-            <p className="text-xs text-muted-foreground">Padaria São José</p>
+            <p className="text-lg font-semibold">Meu Gestor</p>
+            <p className="text-xs text-muted-foreground">Conta Demo</p>
           </div>
         </div>
       </SidebarHeader>

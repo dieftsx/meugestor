@@ -1,26 +1,24 @@
 
-// Corrigido: importação e verificação das variáveis de ambiente do Supabase
+import { createBrowserClient } from "@supabase/ssr"
+import type { Database } from "@/types/database"
 
-import { createClient } from "@supabase/supabase-js"
-
-// Verificação das variáveis de ambiente do Supabase
-const supabaseUrl: string | undefined = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey: string | undefined = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Environment variables check
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables")
 }
 
-// Cliente para componentes do lado do cliente
-export const createSupabaseClient = () =>
-  createClient(supabaseUrl, supabaseAnonKey)
+// Cliente singleton para evitar múltiplas instâncias
+let supabaseClient: ReturnType<typeof createBrowserClient<Database>> | null = null
 
-// Cliente singleton para uso geral no cliente
-let supabaseClient: ReturnType<typeof createClient> | null = null
-
-export const getSupabaseClient = () => {
+export const createClient = () => {
   if (!supabaseClient) {
-    supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+    supabaseClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
   }
   return supabaseClient
 }
+
+// Alias para compatibilidade
+export const getSupabaseClient = createClient

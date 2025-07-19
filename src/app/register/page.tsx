@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
+import { useState, useEffect } from "react"
 
-import { useState } from "react"
-import { createSupabaseClient } from "@/lib/supabase"
+import { createClient, testConnection } from "@/lib/supabase-client-safe"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,12 +30,27 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-  const supabase = createSupabaseClient()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      const result = await testConnection()
+      if (!result.success) {
+        setError(`Erro de configuração: ${result.error}`)
+      }
+    }
+
+    checkConnection()
+  }, [])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+
+    // Debug logs
+    console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "Configurado" : "NÃO CONFIGURADO")
+    console.log("Supabase Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Configurado" : "NÃO CONFIGURADO")
 
     if (formData.password !== formData.confirmPassword) {
       setError("As senhas não coincidem")
@@ -50,7 +65,12 @@ export default function RegisterPage() {
     }
 
     try {
-      const { error: authError } = await supabase.auth.signUp({
+      const supabase = createClient()
+
+      // Log adicional para debug
+      console.log("Tentando criar usuário com email:", formData.email)
+
+      const { data, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -64,7 +84,10 @@ export default function RegisterPage() {
         },
       })
 
+      console.log("Resposta do Supabase:", { data, error: authError })
+
       if (authError) {
+        console.error("Erro detalhado:", authError)
         setError("Erro ao criar conta: " + authError.message)
         return
       }
@@ -74,7 +97,8 @@ export default function RegisterPage() {
         router.push("/dashboard")
       }, 2000)
     } catch (err) {
-      setError("Erro ao criar conta. Tente novamente.")
+      console.error("Erro no catch:", err)
+      setError("Erro ao criar conta. Verifique sua conexão e tente novamente.")
     } finally {
       setLoading(false)
     }
@@ -100,7 +124,7 @@ export default function RegisterPage() {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <BarChart3 className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">Meu Gestor</span>
+            <span className="text-2xl font-bold text-gray-900">GestãoRO</span>
           </div>
           <CardTitle>Criar sua conta</CardTitle>
           <CardDescription>Comece seu teste grátis de 15 dias agora mesmo</CardDescription>

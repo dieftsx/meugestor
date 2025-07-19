@@ -1,9 +1,10 @@
+
 "use client"
 
 import type React from "react"
 
 import { useState } from "react"
-import { createSupabaseClient } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,7 +21,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
-  const supabase = createSupabaseClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,6 +28,7 @@ export default function LoginPage() {
     setError("")
 
     try {
+      const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -52,7 +53,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <BarChart3 className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">Meu Gestor</span>
+            <span className="text-2xl font-bold text-gray-900">GestãoRO</span>
           </div>
           <CardTitle>Entrar na sua conta</CardTitle>
           <CardDescription>Acesse seu painel de controle e gerencie seu negócio</CardDescription>
@@ -128,7 +129,7 @@ export default function LoginPage() {
               size="sm"
               className="mt-2 w-full bg-green-100 border-green-300"
               onClick={() => {
-                setEmail("demo@gestaoro.com.br")
+                setEmail("demo@meugestor.com.br")
                 setPassword("demo123")
               }}
             >

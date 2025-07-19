@@ -1,10 +1,9 @@
 
-
 "use client"
 
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
-import { createSupabaseClient } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase"
 import type { User } from "@supabase/supabase-js"
 
 type AuthContextType = {
@@ -41,7 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const supabase = createSupabaseClient()
+      // Use singleton client
+      const supabase = createClient()
 
       const getUser = async () => {
         try {
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const {
         data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
         setUser(session?.user ?? null)
         setLoading(false)
       })
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      const supabase = createSupabaseClient()
+      const supabase = createClient()
       await supabase.auth.signOut()
     } catch (err) {
       console.error("Error signing out:", err)

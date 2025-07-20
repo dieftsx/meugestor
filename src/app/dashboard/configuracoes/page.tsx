@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +20,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CreditCard, Shield, Database, Bell, User, Building, Download, CheckCircle } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
+import { createClient } from "@/lib/supabase"
 
 export default function ConfiguracoesPage() {
   const [loading, setLoading] = useState(false)
@@ -31,6 +32,61 @@ export default function ConfiguracoesPage() {
     promocoes: false,
   })
   const { user, signOut } = useAuth()
+
+  // Estados para dados reais
+  const [profile, setProfile] = useState<any>(null)
+  const [empresa, setEmpresa] = useState<any>({})
+  const [horarios, setHorarios] = useState<string>("")
+  const [salvando, setSalvando] = useState(false)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return
+      const supabase = createClient()
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+      if (!error && data) {
+        setProfile(data)
+        setEmpresa({
+          nome_empresa: data.nome_empresa || "",
+          cnpj: data.cnpj || "",
+          cidade: data.cidade || "",
+          endereco: data.endereco || "",
+        })
+        setHorarios(data.horarios_funcionamento || "")
+      }
+    }
+    if (user) fetchProfile()
+  }, [user])
+
+  // Handlers de alteração
+  const handleProfileChange = (e: any) => {
+    setProfile({ ...profile, [e.target.id]: e.target.value })
+  }
+  const handleEmpresaChange = (e: any) => {
+    setEmpresa({ ...empresa, [e.target.id]: e.target.value })
+  }
+  const handleHorariosChange = (e: any) => {
+    setHorarios(e.target.value)
+  }
+
+  // Salvar alterações
+  const salvarAlteracoes = async () => {
+    if (!user) return;
+    setSalvando(true)
+    const supabase = createClient()
+    // Atualiza profile
+    await supabase.from("profiles").update({
+      nome_completo: profile.nome_completo,
+      telefone: profile.telefone,
+      nome_empresa: empresa.nome_empresa,
+      cnpj: empresa.cnpj,
+      cidade: empresa.cidade,
+      endereco: empresa.endereco,
+      horarios_funcionamento: horarios,
+    }).eq("id", user.id)
+    setSalvando(false)
+    alert("Alterações salvas com sucesso!")
+  }
 
   const criarBackup = async () => {
     setBackupLoading(true)
@@ -146,21 +202,21 @@ export default function ConfiguracoesPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nome">Nome Completo</Label>
-                  <Input id="nome" defaultValue="José Silva" />
+                  <Label htmlFor="nome_completo">Nome Completo</Label>
+                  <Input id="nome_completo" value={profile?.nome_completo || ""} onChange={handleProfileChange} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="telefone">Telefone</Label>
-                  <Input id="telefone" defaultValue="(69) 99999-9999" />
+                  <Input id="telefone" value={profile?.telefone || ""} onChange={handleProfileChange} />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue={user?.email || ""} />
+                <Input id="email" type="email" value={user?.email || ""} disabled />
               </div>
 
-              <Button className="w-full">Salvar Alterações</Button>
+              <Button className="w-full" onClick={salvarAlteracoes} disabled={salvando}>{salvando ? "Salvando..." : "Salvar Alterações"}</Button>
             </CardContent>
           </Card>
 
@@ -175,27 +231,32 @@ export default function ConfiguracoesPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="nomeEmpresa">Nome da Empresa</Label>
-                <Input id="nomeEmpresa" defaultValue="Padaria São José" />
+                <Label htmlFor="nome_empresa">Nome da Empresa</Label>
+                <Input id="nome_empresa" value={empresa.nome_empresa || ""} onChange={handleEmpresaChange} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="cnpj">CNPJ</Label>
-                  <Input id="cnpj" defaultValue="12.345.678/0001-90" />
+                  <Input id="cnpj" value={empresa.cnpj || ""} onChange={handleEmpresaChange} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cidade">Cidade</Label>
-                  <Input id="cidade" defaultValue="Ji-Paraná, RO" />
+                  <Input id="cidade" value={empresa.cidade || ""} onChange={handleEmpresaChange} />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="endereco">Endereço</Label>
-                <Input id="endereco" defaultValue="Rua das Flores, 123 - Centro" />
+                <Input id="endereco" value={empresa.endereco || ""} onChange={handleEmpresaChange} />
               </div>
 
-              <Button className="w-full">Salvar Alterações</Button>
+              <div className="space-y-2">
+                <Label htmlFor="horarios_funcionamento">Horários de Funcionamento</Label>
+                <Input id="horarios_funcionamento" value={horarios} onChange={handleHorariosChange} placeholder="Ex: 08:00-12:00, 14:00-18:00" />
+              </div>
+
+              <Button className="w-full" onClick={salvarAlteracoes} disabled={salvando}>{salvando ? "Salvando..." : "Salvar Alterações"}</Button>
             </CardContent>
           </Card>
         </div>

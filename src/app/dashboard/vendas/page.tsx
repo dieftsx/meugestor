@@ -17,23 +17,59 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Search, ShoppingCart, Trash2, Calculator } from "lucide-react"
+import { useAuth } from "@/components/auth-provider"
+import { useEffect } from "react"
+import { createClient } from "@/lib/supabase"
 
 export default function VendasPage() {
-  const [carrinho, setCarrinho] = useState([
-    { id: 1, nome: "Pão Francês", preco: 2.0, quantidade: 5, total: 10.0 },
-    { id: 2, nome: "Café com Leite", preco: 4.0, quantidade: 2, total: 8.0 },
-  ])
+  const { user, loading } = useAuth()
+  const [carrinho, setCarrinho] = useState<any[]>([])
+  const [produtos, setProdutos] = useState<any[]>([])
+  const [vendas, setVendas] = useState<any[]>([])
+  const [carregandoProdutos, setCarregandoProdutos] = useState(true)
+  const [carregandoVendas, setCarregandoVendas] = useState(true)
+
+  useEffect(() => {
+    const fetchProdutos = async () => {
+      if (!user) return
+      setCarregandoProdutos(true)
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("produtos")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+      if (!error && data) {
+        setProdutos(data)
+      } else {
+        setProdutos([])
+      }
+      setCarregandoProdutos(false)
+    }
+    if (user) fetchProdutos()
+  }, [user])
+
+  useEffect(() => {
+    const fetchVendas = async () => {
+      if (!user) return
+      setCarregandoVendas(true)
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("vendas")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+      if (!error && data) {
+        setVendas(data)
+      } else {
+        setVendas([])
+      }
+      setCarregandoVendas(false)
+    }
+    if (user) fetchVendas()
+  }, [user])
 
   const totalCarrinho = carrinho.reduce((sum, item) => sum + item.total, 0)
-
-  const produtos = [
-    { id: 1, nome: "Pão Francês", preco: 2.0, estoque: 150 },
-    { id: 2, nome: "Pão de Açúcar", preco: 2.5, estoque: 80 },
-    { id: 3, nome: "Café com Leite", preco: 4.0, estoque: 200 },
-    { id: 4, nome: "Sonho de Valsa", preco: 3.0, estoque: 45 },
-    { id: 5, nome: "Refrigerante Lata", preco: 4.0, estoque: 120 },
-    { id: 6, nome: "Água Mineral", preco: 2.5, estoque: 200 },
-  ]
 
   const adicionarAoCarrinho = (produto: any) => {
     const itemExistente = carrinho.find((item) => item.id === produto.id)
@@ -51,9 +87,9 @@ export default function VendasPage() {
         {
           id: produto.id,
           nome: produto.nome,
-          preco: produto.preco,
+          preco: produto.preco_venda,
           quantidade: 1,
-          total: produto.preco,
+          total: produto.preco_venda,
         },
       ])
     }
@@ -67,6 +103,9 @@ export default function VendasPage() {
     alert(`Venda finalizada! Total: R$ ${totalCarrinho.toFixed(2)}`)
     setCarrinho([])
   }
+
+  const vendasHoje = vendas.filter(v => new Date(v.created_at).toDateString() === new Date().toDateString())
+  const totalVendasHoje = vendasHoje.reduce((sum, v) => sum + Number(v.total), 0)
 
   return (
     <>
@@ -85,7 +124,9 @@ export default function VendasPage() {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="ml-auto">
-          <Badge className="bg-green-100 text-green-800">Vendas Hoje: R$ 1.247,80</Badge>
+          <Badge className="bg-green-100 text-green-800">
+            Vendas Hoje: R$ {carregandoVendas ? "..." : totalVendasHoje.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </Badge>
         </div>
       </header>
 
@@ -107,26 +148,34 @@ export default function VendasPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-2 max-h-96 overflow-y-auto">
-                {produtos.map((produto) => (
-                  <div
-                    key={produto.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                    onClick={() => adicionarAoCarrinho(produto)}
-                  >
-                    <div>
-                      <p className="font-medium">{produto.nome}</p>
-                      <p className="text-sm text-gray-500">Estoque: {produto.estoque} unidades</p>
+              {carregandoProdutos ? (
+                <p>Carregando produtos...</p>
+              ) : produtos.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  Nenhum produto cadastrado ainda. Cadastre seu primeiro produto para começar a vender.
+                </div>
+              ) : (
+                <div className="grid gap-2 max-h-96 overflow-y-auto">
+                  {produtos.map((produto) => (
+                    <div
+                      key={produto.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                      onClick={() => adicionarAoCarrinho(produto)}
+                    >
+                      <div>
+                        <p className="font-medium">{produto.nome}</p>
+                        <p className="text-sm text-gray-500">Estoque: {produto.estoque_atual} unidades</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-green-600">R$ {Number(produto.preco_venda).toFixed(2)}</p>
+                        <Button size="sm" className="mt-1">
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-green-600">R$ {produto.preco.toFixed(2)}</p>
-                      <Button size="sm" className="mt-1">
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -194,55 +243,34 @@ export default function VendasPage() {
             <CardDescription>Histórico das vendas realizadas hoje</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Horário</TableHead>
-                  <TableHead>Produtos</TableHead>
-                  <TableHead>Quantidade</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell>14:32</TableCell>
-                  <TableCell>Pão Francês, Café com Leite</TableCell>
-                  <TableCell>7 itens</TableCell>
-                  <TableCell className="font-semibold text-green-600">R$ 18,00</TableCell>
-                  <TableCell>
-                    <Badge className="bg-green-100 text-green-800">Concluída</Badge>
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>14:28</TableCell>
-                  <TableCell>Sonho de Valsa, Refrigerante</TableCell>
-                  <TableCell>3 itens</TableCell>
-                  <TableCell className="font-semibold text-green-600">R$ 13,00</TableCell>
-                  <TableCell>
-                    <Badge className="bg-green-100 text-green-800">Concluída</Badge>
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>14:15</TableCell>
-                  <TableCell>Pão de Açúcar, Água Mineral</TableCell>
-                  <TableCell>4 itens</TableCell>
-                  <TableCell className="font-semibold text-green-600">R$ 15,00</TableCell>
-                  <TableCell>
-                    <Badge className="bg-green-100 text-green-800">Concluída</Badge>
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>14:02</TableCell>
-                  <TableCell>Pão Francês, Café com Leite, Sonho</TableCell>
-                  <TableCell>8 itens</TableCell>
-                  <TableCell className="font-semibold text-green-600">R$ 22,00</TableCell>
-                  <TableCell>
-                    <Badge className="bg-green-100 text-green-800">Concluída</Badge>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            {carregandoVendas ? (
+              <p>Carregando vendas...</p>
+            ) : vendas.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                Nenhuma venda realizada ainda. Cadastre sua primeira venda!
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data/Hora</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {vendas.map((venda) => (
+                    <TableRow key={venda.id}>
+                      <TableCell>{new Date(venda.created_at).toLocaleString("pt-BR")}</TableCell>
+                      <TableCell className="font-semibold text-green-600">R$ {Number(venda.total).toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge className="bg-green-100 text-green-800">{venda.status_pagamento || "Concluída"}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

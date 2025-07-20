@@ -56,7 +56,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
+        <div className="w-full max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Crown className="h-6 w-6 text-yellow-600" />
@@ -67,7 +67,7 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-6xl mx-auto px-4 py-8">
         {/* Métricas Principais */}
         <div className="grid auto-rows-min gap-4 md:grid-cols-4 mb-8">
           <Card>

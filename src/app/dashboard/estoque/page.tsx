@@ -25,76 +25,34 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Package, AlertTriangle, Plus, Search, Edit, TrendingDown, Calendar } from "lucide-react"
+import { useAuth } from "@/components/auth-provider"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase"
 
 export default function EstoquePage() {
-  const produtos = [
-    {
-      id: 1,
-      nome: "Farinha de Trigo",
-      categoria: "Ingredientes",
-      estoque: 2,
-      minimo: 10,
-      preco: 4.5,
-      status: "critico",
-      ultimaCompra: "2024-01-10",
-      fornecedor: "Distribuidora ABC",
-    },
-    {
-      id: 2,
-      nome: "Ovos",
-      categoria: "Ingredientes",
-      estoque: 3,
-      minimo: 5,
-      preco: 8.0,
-      status: "baixo",
-      ultimaCompra: "2024-01-12",
-      fornecedor: "Granja São João",
-    },
-    {
-      id: 3,
-      nome: "Leite Integral",
-      categoria: "Laticínios",
-      estoque: 8,
-      minimo: 15,
-      preco: 4.2,
-      status: "vencimento",
-      ultimaCompra: "2024-01-11",
-      fornecedor: "Laticínios RO",
-    },
-    {
-      id: 4,
-      nome: "Açúcar Cristal",
-      categoria: "Ingredientes",
-      estoque: 15,
-      minimo: 8,
-      preco: 3.8,
-      status: "ok",
-      ultimaCompra: "2024-01-08",
-      fornecedor: "Distribuidora ABC",
-    },
-    {
-      id: 5,
-      nome: "Pão Francês",
-      categoria: "Produtos Finais",
-      estoque: 150,
-      minimo: 50,
-      preco: 2.0,
-      status: "ok",
-      ultimaCompra: "Produção própria",
-      fornecedor: "Produção própria",
-    },
-    {
-      id: 6,
-      nome: "Refrigerante Lata",
-      categoria: "Bebidas",
-      estoque: 120,
-      minimo: 30,
-      preco: 4.0,
-      status: "ok",
-      ultimaCompra: "2024-01-09",
-      fornecedor: "Coca-Cola RO",
-    },
-  ]
+  const { user, loading } = useAuth()
+  const [produtos, setProdutos] = useState<any[]>([])
+  const [carregando, setCarregando] = useState(true)
+
+  useEffect(() => {
+    const fetchProdutos = async () => {
+      if (!user) return
+      setCarregando(true)
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("produtos")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+      if (!error && data) {
+        setProdutos(data)
+      } else {
+        setProdutos([])
+      }
+      setCarregando(false)
+    }
+    if (user) fetchProdutos()
+  }, [user])
 
   const getStatusBadge = (status: string, estoque: number, minimo: number) => {
     switch (status) {
@@ -111,9 +69,9 @@ export default function EstoquePage() {
     }
   }
 
-  const produtosCriticos = produtos.filter((p) => p.status === "critico").length
-  const produtosBaixos = produtos.filter((p) => p.status === "baixo").length
-  const produtosVencimento = produtos.filter((p) => p.status === "vencimento").length
+  const produtosCriticos = produtos.filter((p) => p.estoque_atual <= p.estoque_minimo).length
+  const produtosBaixos = produtos.filter((p) => p.estoque_atual > p.estoque_minimo && p.estoque_atual <= p.estoque_minimo * 1.5).length
+  const produtosVencimento = produtos.filter((p) => p.controla_validade && p.dias_vencimento && p.dias_vencimento < 7).length
 
   return (
     <>
@@ -233,68 +191,50 @@ export default function EstoquePage() {
           </Card>
         </div>
 
-        {/* Lista de Produtos */}
-        <Card>
+        {/* Tabela de Produtos */}
+        <Card className="mt-6">
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Package className="h-5 w-5 mr-2" />
-              Controle de Estoque
-            </CardTitle>
-            <CardDescription>Gerencie todos os produtos do seu estoque</CardDescription>
-            <div className="flex gap-2">
-              <Input placeholder="Buscar produto..." className="max-w-sm" />
-              <Button variant="outline">
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
+            <CardTitle>Produtos em Estoque</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Estoque Atual</TableHead>
-                  <TableHead>Estoque Mínimo</TableHead>
-                  <TableHead>Preço</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Última Compra</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {produtos.map((produto) => (
-                  <TableRow key={produto.id}>
-                    <TableCell className="font-medium">{produto.nome}</TableCell>
-                    <TableCell>{produto.categoria}</TableCell>
-                    <TableCell>
-                      <span className={produto.estoque <= produto.minimo ? "text-red-600 font-semibold" : ""}>
-                        {produto.estoque}
-                      </span>
-                    </TableCell>
-                    <TableCell>{produto.minimo}</TableCell>
-                    <TableCell>R$ {produto.preco.toFixed(2)}</TableCell>
-                    <TableCell>{getStatusBadge(produto.status, produto.estoque, produto.minimo)}</TableCell>
-                    <TableCell className="text-sm text-gray-500">{produto.ultimaCompra}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {carregando ? (
+              <p>Carregando produtos...</p>
+            ) : produtos.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                Nenhum produto cadastrado ainda. Clique em "Novo Produto" para começar.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Estoque</TableHead>
+                    <TableHead>Mínimo</TableHead>
+                    <TableHead>Preço</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {produtos.map((produto) => (
+                    <TableRow key={produto.id}>
+                      <TableCell>{produto.nome}</TableCell>
+                      <TableCell>{produto.categoria_id || "-"}</TableCell>
+                      <TableCell>{produto.estoque_atual}</TableCell>
+                      <TableCell>{produto.estoque_minimo}</TableCell>
+                      <TableCell>R$ {Number(produto.preco_venda).toFixed(2)}</TableCell>
+                      <TableCell>{getStatusBadge(produto.estoque_atual <= produto.estoque_minimo ? "critico" : "ok", produto.estoque_atual, produto.estoque_minimo)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
         {/* Alertas Importantes */}
         <div className="grid gap-4 md:grid-cols-3">
+          {/* Estoque Crítico */}
           <Card className="border-red-200 bg-red-50">
             <CardHeader>
               <CardTitle className="text-red-800 flex items-center">
@@ -303,16 +243,23 @@ export default function EstoquePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <p className="text-red-700 font-medium">Farinha de Trigo</p>
-                <p className="text-sm text-red-600">Apenas 2 sacos restantes</p>
-                <Button size="sm" className="bg-red-600 hover:bg-red-700">
-                  Comprar Agora
-                </Button>
-              </div>
+              {produtos.filter(p => p.estoque_atual <= p.estoque_minimo).length === 0 ? (
+                <div className="text-red-700">Nenhum produto em estoque crítico.</div>
+              ) : (
+                produtos.filter(p => p.estoque_atual <= p.estoque_minimo).map((produto) => (
+                  <div key={produto.id} className="space-y-2 mb-4">
+                    <p className="text-red-700 font-medium">{produto.nome}</p>
+                    <p className="text-sm text-red-600">Apenas {produto.estoque_atual} {produto.unidade_medida || ''} restantes</p>
+                    <Button size="sm" className="bg-red-600 hover:bg-red-700">
+                      Comprar Agora
+                    </Button>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
 
+          {/* Estoque Baixo */}
           <Card className="border-orange-200 bg-orange-50">
             <CardHeader>
               <CardTitle className="text-orange-800 flex items-center">
@@ -321,16 +268,23 @@ export default function EstoquePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <p className="text-orange-700 font-medium">Ovos</p>
-                <p className="text-sm text-orange-600">3 dúzias (mín: 5)</p>
-                <Button size="sm" variant="outline" className="border-orange-300 bg-transparent">
-                  Programar Compra
-                </Button>
-              </div>
+              {produtos.filter(p => p.estoque_atual > p.estoque_minimo && p.estoque_atual <= p.estoque_minimo * 1.5).length === 0 ? (
+                <div className="text-orange-700">Nenhum produto com estoque baixo.</div>
+              ) : (
+                produtos.filter(p => p.estoque_atual > p.estoque_minimo && p.estoque_atual <= p.estoque_minimo * 1.5).map((produto) => (
+                  <div key={produto.id} className="space-y-2 mb-4">
+                    <p className="text-orange-700 font-medium">{produto.nome}</p>
+                    <p className="text-sm text-orange-600">{produto.estoque_atual} (mín: {produto.estoque_minimo})</p>
+                    <Button size="sm" variant="outline" className="border-orange-300 bg-transparent">
+                      Programar Compra
+                    </Button>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
 
+          {/* Vencimento Próximo */}
           <Card className="border-yellow-200 bg-yellow-50">
             <CardHeader>
               <CardTitle className="text-yellow-800 flex items-center">
@@ -339,13 +293,19 @@ export default function EstoquePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <p className="text-yellow-700 font-medium">Leite Integral</p>
-                <p className="text-sm text-yellow-600">Vence em 2 dias</p>
-                <Button size="sm" variant="outline" className="border-yellow-300 bg-transparent">
-                  Fazer Promoção
-                </Button>
-              </div>
+              {produtos.filter(p => p.controla_validade && p.dias_vencimento && p.dias_vencimento < 7).length === 0 ? (
+                <div className="text-yellow-700">Nenhum produto com vencimento próximo.</div>
+              ) : (
+                produtos.filter(p => p.controla_validade && p.dias_vencimento && p.dias_vencimento < 7).map((produto) => (
+                  <div key={produto.id} className="space-y-2 mb-4">
+                    <p className="text-yellow-700 font-medium">{produto.nome}</p>
+                    <p className="text-sm text-yellow-600">Vence em {produto.dias_vencimento} dias</p>
+                    <Button size="sm" variant="outline" className="border-yellow-300 bg-transparent">
+                      Fazer Promoção
+                    </Button>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>

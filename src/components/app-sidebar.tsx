@@ -20,6 +20,9 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
+import { useAuth } from "@/components/auth-provider"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase"
 
 const data = {
   navMain: [
@@ -63,6 +66,25 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user, signOut } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      if (!error && data) {
+        setProfile(data);
+      }
+    };
+    if (user) fetchProfile();
+  }, [user]);
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -70,7 +92,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <BarChart3 className="h-6 w-6 text-blue-600" />
           <div>
             <p className="text-lg font-semibold">Meu Gestor</p>
-            <p className="text-xs text-muted-foreground">Conta Demo</p>
+            <p className="text-xs text-muted-foreground">
+              {profile?.nome_empresa || "Conta"}
+            </p>
           </div>
         </div>
       </SidebarHeader>
@@ -123,12 +147,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src="/placeholder.svg?height=32&width=32" alt="José Silva" />
-                    <AvatarFallback className="rounded-lg">JS</AvatarFallback>
+                    <AvatarImage src={profile?.avatar_url || "/placeholder.svg?height=32&width=32"} alt={profile?.nome_completo || user?.email || "Usuário"} />
+                    <AvatarFallback className="rounded-lg">
+                      {profile?.nome_completo
+                        ? profile.nome_completo.split(" ").map((n: string) => n[0]).join("")
+                        : (user?.email ? user.email[0].toUpperCase() : "U")}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">José Silva</span>
-                    <span className="truncate text-xs">jose@padariasaojose.com</span>
+                    <span className="truncate font-semibold">{profile?.nome_completo || user?.email || "Usuário"}</span>
+                    <span className="truncate text-xs">{user?.email}</span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -138,15 +166,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  Meu Perfil
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/perfil">
+                    <User className="mr-2 h-4 w-4" />
+                    Meu Perfil
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
                   Configurações
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Sair
                 </DropdownMenuItem>

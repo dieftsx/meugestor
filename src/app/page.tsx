@@ -78,17 +78,60 @@ export default function HomePage() {
               Sistema completo para padarias, açougues, lojas e restaurantes em Rondônia. 
               Controle vendas, estoque e clientes em uma única plataforma.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link href="/register">
                 <Button size="lg" className="text-lg px-8 py-3">
                   Começar Teste Grátis
                 </Button>
               </Link>
-              <Link href="/diagnostico">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-3">
-                  Verificar Sistema
-                </Button>
-              </Link>
+            </div>
+            {/* Card de Assinatura */}
+            <div className="flex justify-center">
+              <Card className="max-w-md w-full mx-auto shadow-lg border-blue-200 border-2">
+                <CardHeader>
+                  <CardTitle className="text-2xl flex items-center justify-center gap-2">
+                    <DollarSign className="h-6 w-6 text-blue-600" /> Assinatura GestãoRO
+                  </CardTitle>
+                  <CardDescription className="text-lg mt-2">
+                    <span className="font-bold text-blue-700 text-3xl">R$ 50,00</span> <span className="text-gray-600">/mês</span>
+                    <br />
+                    <span className="text-gray-500 text-base">ou <span className="font-semibold">R$ 600,00</span> /ano</span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="text-left text-gray-700 mb-6 space-y-1 text-base">
+                    <li>✔️ Acesso completo à plataforma</li>
+                    <li>✔️ Suporte prioritário</li>
+                    <li>✔️ Relatórios e backups ilimitados</li>
+                  </ul>
+                  <Button
+                    size="lg"
+                    className="w-full text-lg"
+                    onClick={async () => {
+                      if (!user) {
+                        router.push("/register")
+                        return
+                      }
+                      try {
+                        const response = await fetch("/api/create-checkout-session", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ priceId: "price_1234567890" }),
+                        })
+                        const { sessionId } = await response.json()
+                        // @ts-ignore
+                        const stripe = window.Stripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+                        await stripe.redirectToCheckout({ sessionId })
+                      } catch (err) {
+                        alert("Erro ao iniciar assinatura. Tente novamente.")
+                      }
+                    }}
+                  >
+                    Assinar agora
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-2">Pagamento seguro via Stripe</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
@@ -151,7 +194,7 @@ export default function HomePage() {
         {/* Footer */}
         <footer className="bg-gray-900 text-white py-8 px-4">
           <div className="w-full max-w-6xl mx-auto text-center px-4">
-            <p>&copy; 2024 GestãoRO. Todos os direitos reservados.</p>
+            <p>&copy; 2025 GestãoRO. Todos os direitos reservados.</p>
           </div>
         </footer>
       </div>
